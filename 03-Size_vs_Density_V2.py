@@ -11,6 +11,8 @@ st.markdown(
 
 Generate a scatter plot showing the relationship between population size and density.
 
+I saw that - so I'm indingishable from elite managers
+
 * Use columns Use selection box to select location type (see column `LocTypeName`).
 * Use selection box to select year (see column `time`), and default to current year.
 """)

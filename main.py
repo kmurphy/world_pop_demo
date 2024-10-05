@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import glob
 
-import plotly.express as px
 st.write("# World Population Tasks")
 
 st.markdown("""This
