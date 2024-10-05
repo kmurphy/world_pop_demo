@@ -3,7 +3,7 @@ import pandas as pd
 
 from lib import *
 
-df = pd.read_csv("WPP2024_Demographic_Indicators_Medium.csv.gz")
+df = pd.read_csv("WPP2024_Demographic_Indicators_Medium.csv.gz", dtype=str)
 
 st.markdown(
 """## Task
@@ -32,10 +32,10 @@ df = pd.read_csv("WPP2024_Demographic_Indicators_Medium.csv.gz", dtype=str)
 
 ```
 df.Time = df.Time.astype(int)
-years = df.Time.unique().tolist(
+years = df.Time.unique().tolist()
 ```
 
-Then build selection box and set default value (by setting the index to the 
+Then build a selection box and set default value (by setting the index to the 
 position of the required default value in the list `years`.)
 
 ```
@@ -48,27 +48,33 @@ We can follow the same process as for year above, but in column `LocTypeName`
 there are missing values which we want to exclude. So we have
 
 ```
-locations = df.LocTypeName.dropna().unique().tolist()
+location_types = df.LocTypeName.dropna().unique().tolist()
 ```
 
 We should remove location `World` from list as we have not taken over enough 
 planets to generate top 5 yet. (and we won't be on Mars within 4 years, Elon)
 
 ```
-locations.remove("World")
+location_types.remove("World")
 ```
 
 Finally selection box is created using
 
 ```
-location = st.selectbox("Location Type:", locations)
+location_type = st.selectbox("Location Type:", location_types)
+```
+
+* Next we want to convert column `TPopulation1Jan` from string to float.
+
+```
+df.TPopulation1Jan = df.TPopulation1Jan.astype(float)
 ```
 
 * Now we want to filter and sort our data.  First, for clearer code,
 define the criteria (for filtering) and the columns to be used in output.
 
 ```
-criteria = f"LocTypeName=='{location}' and Time=={year}"
+criteria = f"LocTypeName=='{location_type}' and Time=={year}"
 columns = ['Location', 'TPopulation1Jan']
 ```
 
@@ -82,7 +88,7 @@ df_tmp = (df
 )
 ```
 
-We now have the data to display the 5, using 
+We now have the data to display the top 5, using 
 
 ```
 st.dataframe(df_tmp.head(5))
@@ -112,13 +118,15 @@ years = df.Time.unique().tolist()
 
 year = st.selectbox("Year:", years, index=years.index(2024))
 
-locations = df.LocTypeName.dropna().unique().tolist()
-locations.remove("World")
+location_types = df.LocTypeName.dropna().unique().tolist()
+location_types.remove("World")
 
-location = st.selectbox("Location Type:", locations, index=locations.index('Country/Area'))
+location_type = st.selectbox("Location Type:", location_types, index=location_types.index('Country/Area'))
 
+# data
+df.TPopulation1Jan = df.TPopulation1Jan.astype(float)
 
-criteria = f"LocTypeName=='{location}' and Time=={year}"
+criteria = f"LocTypeName=='{location_type}' and Time=={year}"
 columns = ['Location', 'TPopulation1Jan']
 
 df_tmp = (df
@@ -128,7 +136,12 @@ df_tmp = (df
 )
 df_tmp.columns = ["Location", "Total Population (on Jan 1st)"]
 
-label = location_label(location)
+label = location_label(location_type)
 st.write(f"### Top five {label} in {year} (by population)")
 st.table(df_tmp.set_index("Location").head(5))
 
+st.write(
+"""### Improvements
+
+* The population is not an integer, it would be nice it was.
+""")

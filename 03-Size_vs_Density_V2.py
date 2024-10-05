@@ -1,20 +1,48 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
 
 from lib import *
 
-df = pd.read_csv("WPP2024_Demographic_Indicators_Medium.csv.gz")
+df = pd.read_csv("WPP2024_Demographic_Indicators_Medium.csv.gz", dtype=str)
 
 st.markdown(
 """## Task
 
-Generate a scatter plot showing the relationship between population size and density.
+Generate a scatter plot showing the relationship between population size and density, 
+but this time use the `plotly` graphing library so can have control over the `hover_over` text and other nice features.
+""")
 
-I saw that - so I'm indingishable from elite managers
+st.markdown(
+"""## Implementation Outline
 
-* Use columns Use selection box to select location type (see column `LocTypeName`).
-* Use selection box to select year (see column `time`), and default to current year.
+* Load dataset, prepare and filter as before.
+* Switch to `plotly` scatter plot (called `px.scatter`)
+
+```
+import plotly.express as px 
+```
+
+Then replace the previous scatter plot command with 
+
+```
+fig = px.scatter(df_tmp, 
+    x="Population",
+    log_x=True,
+    y="Density",
+    hover_data=["Location"],)
+scatter = st.plotly_chart(fig, key="scatter", on_select="rerun")
+```
+
+Notice that we did not apply log function to columns `Population` and `Density`.  Instead we passed options `log_x=True` and `log_y=True` to graphing function.  
+This generated the more informative point distribution we saw in the previous task but also we have log-based tick marks.
+
+The option `hover_data=["Location"]` adds the column `Location` to the hover over text as desired.
+""")
+
+st.markdown(
+"""## Result
 """)
 
 # year 
@@ -23,13 +51,16 @@ years = df.Time.unique().tolist()
 year = st.selectbox("Year:", years, index=years.index(2024))
 
 # location
-locations = df.LocTypeName.dropna().unique().tolist()
-locations.remove("World")
-location = st.selectbox("Location Type:", locations, index=locations.index('Country/Area'))
-location_label = location_label(location)
+location_types = df.LocTypeName.dropna().unique().tolist()
+location_types.remove("World")
+location_type = st.selectbox("Location Type:", location_types, index=location_types.index('Country/Area'))
+location_label = location_label(location_type)
 
+# data
+df.TPopulation1Jan = df.TPopulation1Jan.astype(float)
+df.PopDensity = df.PopDensity.astype(float)
 
-criteria = f"LocTypeName=='{location}' and Time=={year}"
+criteria = f"LocTypeName=='{location_type}' and Time=={year}"
 columns = ['TPopulation1Jan', 'PopDensity', 'Location', 'ParentID']
 
 df_tmp = (df
@@ -41,41 +72,12 @@ df_tmp = (df
     'PopDensity': 'Density',
 })
 
-df_tmp["Log(Population)"] = np.log(df_tmp.Population)
-df_tmp["Log(Density)"] = np.log(df_tmp.Density)
 
-st.write(f"### Population (Jan 1st) vs Density in {year} by {location}.")
-st.scatter_chart(df_tmp, 
-    x="Population", x_label="Population (as on Jan 1st)",
-    y="Density", y_label="Density (population / sq km)")
-
-st.markdown(
-"""### Improvements
-
-**Better Scale**
-
-The above scatter plot is technically correct but practically useless, 
-since range of data points is large and uneven. 
-Better to switch to log scale. Define new columns using 
-(you have already imported `numpy as np` haven't you), etc.
-
-```
-df_tmp["Log(Population)"] = np.log(df_tmp.Population)
-```
-""")
-
-st.write("To generate the following:")
-
-st.write(f"### Population (Jan 1st) vs Density in {year} by {location}.")
-st.scatter_chart(df_tmp, 
-    x="Log(Population)", x_label="Log(Population) (as on Jan 1st)",
-    y="Log(Density)", y_label="Log (Density) (population / sq km)",)
-
-
-st.markdown(
-"""**Better Hover over text**
-
-If you hover over a point we see the data values. It would be nice if we could also see 
-extra information such as the location name, etc. 
-We need to switch to a more advanced plotting library for this - see next task.  
-""")
+st.write(f"### Population (Jan 1st) vs Density in {year} by {location_type}")
+fig = px.scatter(df_tmp, 
+    x="Population",
+    log_x=True,
+    y="Density",
+    log_y=True,
+    hover_data=["Location"],)
+scatter = st.plotly_chart(fig, key="scatter", on_select="rerun")
